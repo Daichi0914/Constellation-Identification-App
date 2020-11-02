@@ -1,7 +1,8 @@
 import React from 'react';
+import { RecoilRoot } from 'recoil';
 import { createAppContainer } from 'react-navigation';
 import { createBottomTabNavigator } from 'react-navigation-tabs';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import mainScreen from './src/Screens/MainScreen';
 import cameraRollScreen from './src/Screens/CameraRollScreen';
@@ -20,6 +21,10 @@ const TabNavigator = createBottomTabNavigator(
 
 const App = createAppContainer(TabNavigator);
 
-export default () => <App />;
+export default () => (
+  <RecoilRoot>
+    <App />
+  </RecoilRoot>
+);
 
 const styles = StyleSheet.create({});

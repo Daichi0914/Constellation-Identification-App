@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { useRecoilState } from 'recoil';
 import { View, StyleSheet, Image, Text } from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
 import { Button } from 'react-native-elements';
+import { photoExifData } from '../atoms/PhotoData';
 
 import * as ImagePicker from 'expo-image-picker';
 import Constants from 'expo-constants';
@@ -11,7 +13,7 @@ const PHOTO = '@photo';
 
 const AddPage = () => {
   const [photoUri, setPhotoUri] = useState(null);
-  const [photoExif, setPhotoExif] = useState(null);
+  const [photoExif, setPhotoExif] = useRecoilState(photoExifData);
 
   useEffect(() => {
     getPermissionAsync();
@@ -32,8 +34,6 @@ const AddPage = () => {
 
   const onSave = async photo => {
     try {
-      console.log(PHOTO);
-      // const Photo = JSON.stringify(photo);
       const Photo = photo;
       await AsyncStorage.setItem(PHOTO, Photo);
     } catch (e) {
@@ -72,15 +72,18 @@ const AddPage = () => {
       setPhotoUri(result.uri);
       setPhotoExif(result.exif);
       onSave(result.uri);
-      console.log(result.exif);
-      console.log(result.exif);
     }
+    console.log(result.exif);
   };
 
   ////////////Exif/////////////
   // 撮影時刻 DateTimeOriginal
   // 緯度 GPSLatitude
+  // GPS緯度参照(北緯・南緯) GPSLatitudeRef
   // 経度 GPSLongitude
+  // GPS経度参照(東経・西経) GPSLongitudeRef
+  // 画像の向き GPSImgDirectionRef
+  // ↑'T'は真方位、'M'は磁気方位
   /////////////////////////////
 
   return (
@@ -141,7 +144,15 @@ const AddPage = () => {
             : photoExif.DateTimeOriginal}
         </Text>
         <Text style={{ flex: 1 }}>
-          緯度：
+          緯度
+          {photoExif === null
+            ? null
+            : photoExif.GPSLatitudeRef === 'N'
+            ? '(北緯)'
+            : photoExif.GPSLatitudeRef === 'S'
+            ? '(南緯)'
+            : null}
+          ：
           {photoExif === null
             ? null
             : photoExif.GPSLatitude === undefined
@@ -149,7 +160,15 @@ const AddPage = () => {
             : photoExif.GPSLatitude}
         </Text>
         <Text style={{ flex: 1 }}>
-          経度：
+          経度
+          {photoExif === null
+            ? null
+            : photoExif.GPSLongitudeRef === 'E'
+            ? '(東経)'
+            : photoExif.GPSLongitudeRef === 'W'
+            ? '(西経)'
+            : null}
+          ：
           {photoExif === null
             ? null
             : photoExif.GPSLongitude === undefined
