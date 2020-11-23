@@ -82,13 +82,81 @@ const AddPage = () => {
   // GPS緯度参照(北緯・南緯) GPSLatitudeRef
   // 経度 GPSLongitude
   // GPS経度参照(東経・西経) GPSLongitudeRef
-  // 画像の向き GPSImgDirectionRef
+  // 画像の向き GPSImgDirection
+  // 画像の経度参照 GPSImgDirectionRef
   // ↑'T'は真方位、'M'は磁気方位
   /////////////////////////////
 
+  const LocalSiderealTimeCalc = () => {
+    const originDate = photoExif.DateTimeOriginal;
+    const dateReplace = originDate.replace(':', '/').replace(':', '/');
+    const date = new Date(dateReplace);
+
+    const currentYear = date.getFullYear();
+    const currentMonth = date.getMonth() + 1;
+    const D = date.getDate();
+
+    const Hour = date.getHours();
+    const Min = date.getMinutes();
+    const Sec = date.getSeconds();
+
+    const Y = () => {
+      switch (currentMonth) {
+        case 1:
+          return currentYear - 1;
+        case 2:
+          return currentYear - 1;
+        default:
+          return currentYear;
+      }
+    };
+    const M = () => {
+      switch (currentMonth) {
+        case 1:
+          return 13;
+        case 2:
+          return 14;
+        default:
+          return currentMonth;
+      }
+    };
+    const Ramda = () => {
+      switch (photoExif.GPSLongitudeRef) {
+        case 'E':
+          return -1 * photoExif.GPSLongitude;
+        case 'W':
+          return photoExif.GPSLongitude;
+      }
+    };
+
+    // ユリウス日
+    const JD = Math.floor(Y() * 365.25) + Math.floor(Y() / 400) - Math.floor(Y() / 100) + Math.floor(30.59 * (M() - 2)) +
+      D + 1721088.5 + (Hour - 9) / 24 + Min / (24 * 60) + Sec / (24 * 60 * 60);
+    // ユリウス通日
+    const TJD = JD - 2440000.5;
+    // グリニッジ恒星時
+    const GST = 24 * (0.671262 + 1.0027379094 * TJD);
+    const GSTRemainder = () => {
+      let x = GST;
+      while (x > 24) {
+        x -= 24;
+      }
+      return x;
+    };
+    // 地方恒星時
+    const LST = () => {
+      let x = GSTRemainder() - Ramda() / 15;
+      while (x > 24) {
+        x -= 24;
+      }
+      return x;
+    };
+    return LST();
+  };
+
   return (
     <View style={{ flex: 1 }}>
-      <View style={{ flex: 4, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ flex: 3, alignItems: 'center', justifyContent: 'center' }}>
         {photoUri == null ? (
           <View style={styles.imageView}>
             <Text
@@ -109,7 +177,7 @@ const AddPage = () => {
 
       <View
         style={{
-          flex: 2,
+          flex: 1,
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
@@ -174,6 +242,18 @@ const AddPage = () => {
             : photoExif.GPSLongitude === undefined
             ? 'No Data'
             : photoExif.GPSLongitude}
+        </Text>
+        <Text style={{ flex: 1 }}>
+          画像の向き：
+          {photoExif === null
+            ? null
+            : photoExif.GPSImgDirection === undefined
+            ? 'No Data'
+            : photoExif.GPSImgDirection}
+        </Text>
+        <Text style={{ flex: 1 }}>
+          地方恒星時：
+          {photoExif === null ? null : LocalSiderealTimeCalc()}
         </Text>
       </View>
     </View>
